@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Шифрование и расшифровка</title>
+<script>
+// Функция для перевода символа в двоичное представление
+function charToBinary(char) {
+const binary = char.charCodeAt(0).toString(2);
+return binary.padStart(8, '0');
+}
+
+// Функция для перевода двоичного числа в символ
+function binaryToChar(binary) {
+const charCode = parseInt(binary, 2);
+return String.fromCharCode(charCode);
+}
+
+// Функция для шифрования блока
+function encryptBlock(block, key) {
+const N1 = block.slice(0, 32);
+const N2 = block.slice(32);
+
+for (let i = 0; i < 32; i++) {
+const keyPart = key.slice((i % 8) * 32, (i % 8) * 32 + 32);
+
+const temp = N1;
+N1 = N2;
+N2 = xor(temp, substitution(xor(N1, keyPart)));
+N2 = shiftLeft(N2, 11);
+}
+
+const encryptedBlock = N2 + N1;
+return encryptedBlock;
+}
+
+// Функция для дешифрования блока
+function decryptBlock(block, key) {
+const N1 = block.slice(0, 32);
+const N2 = block.slice(32);
+
+for (let i = 31; i >= 0; i--) {
+const keyPart = key.slice((i % 8) * 32, (i % 8) * 32 + 32);
+
+const temp = N1;
+N1 = xor(N2, substitution(xor(N1, keyPart)));
+N1 = shiftLeft(N1, 11);
+N2 = temp;
+}
+
+const decryptedBlock = N2 + N1;
+return decryptedBlock;
+}
+
+// Функция для выполнения операции XOR
+function xor(a, b) {
+let result = '';
+for (let i = 0; i < a.length; i++) {
+result += a[i] === b[i] ? '0' : '1';
+}
+return result;
+}
+
+// Функция для замены каждых 4 битов по таблице
+function substitution(binary) {
+const substitutionTable = [
+'1110', '0100', '1101', '0001', '0010', '1111', '1011', '1000',
+'0011', '1010', '0110', '1100', '0101', '1001', '0000', '0111'
+];
+
+let result = '';
+for (let i = 0; i < binary.length; i += 4) {
+const nibble = binary.slice(i, i + 4);
+const substitutionIndex = parseInt(nibble, 2);
+result += substitutionTable[substitutionIndex];
+}
+return result;
+}
+
+// Функция для сдвига влево на n битов
+function shiftLeft(binary, n) {
+const shiftedBinary = binary.slice(n) + binary.slice(0, n);
+return shiftedBinary;
+}
+
+// Функция для обновления зашифрованного текста
+function updateEncryptedText(encryptedText) {
+document.getElementById('encryptedText').value = encryptedText;
+}
+
+// Функция для обновления расшифрованного текста
+function updateDecryptedText(decryptedText) {
+document.getElementById('decryptedText').value = decryptedText;
+}
+
+// Функция для шифрования текста
+function encryptText() {
+const plaintext = document.getElementById('plaintext').value;
+const key = document.getElementById('key').value;
+let encryptedText = '';
+
+for (let i = 0; i < plaintext.length; i++) {
+const char = plaintext[i];
+const binary = charToBinary(char);
+const encryptedBlock = encryptBlock(binary, key);
+encryptedText += binaryToChar(encryptedBlock);
+}
+
+updateEncryptedText(encryptedText);
+}
+
+// Функция для расшифровки текста
+function decryptText() {
+const encryptedText = document.getElementById('encryptedText').value;
+const key = document.getElementById('key').value;
+let decryptedText = '';
+
+for (let i = 0; i < encryptedText.length; i++) {
+const char = encryptedText[i];
+const binary = charToBinary(char);
+const decryptedBlock = decryptBlock(binary, key);
+decryptedText += binaryToChar(decryptedBlock);
+}
+
+updateDecryptedText(decryptedText);
+}
+
+/*
+// Функция для шифрования текста
+function encryptText() {
+const plaintext = document.getElementById('plaintext').value;
+const key = document.getElementById('key').value;
+let encryptedText = '';
+
+for (let i = 0; i < plaintext.length; i++) {
+const char = plaintext[i];
+const binary = charToBinary(char);
+const encryptedBlock = encryptBlock(binary, key);
+encryptedText += binaryToChar(encryptedBlock);
+}
+
+document.getElementById('encryptedText').textContent = encryptedText;
+}
+
+// Функция для расшифровки текста
+function decryptText() {
+const encryptedText = document.getElementById('encryptedText').textContent;
+const key = document.getElementById('key').value;
+let decryptedText = '';
+
+for (let i = 0; i < encryptedText.length; i++) {
+const char = encryptedText[i];
+const binary = charToBinary(char);
+const decryptedBlock = decryptBlock(binary, key);
+decryptedText += binaryToChar(decryptedBlock);
+}
+
+document.getElementById('decryptedText').textContent = decryptedText;
+}*/
+</script>
+</head>
+<body>
+<h1>Шифрование и расшифровка</h1>
+<label for="plaintext">Текст:</label>
+<input type="text" id="plaintext">
+
+<label for="key">Ключ:</label>
+<input type="text" id="key">
+
+<button onclick="encryptText()">Зашифровать</button>
+<button onclick="decryptText()">Расшифровать</button>
+
+<div id="textOut">
+    <label for="encryptedText">Зашифрованный текст:</label>
+    <textarea rows="8" cols="60" id="encryptedText"></textarea>
+</div>
+
+<div id="textOut">
+    <label for="decryptedText">Расшифрованный текст:</label>
+    <textarea rows="8" cols="60" id="decryptedText"></textarea>
+</div>
+
+</body>
+</html>
+
